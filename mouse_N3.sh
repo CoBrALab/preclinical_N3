@@ -11,8 +11,8 @@
 # ARG_OPTIONAL_SINGLE([isostep],[],[Isotropic resampling resolution in mm for N3],[0.3])
 # ARG_OPTIONAL_BOOLEAN([big-misorientation],[],[Input file is very misoriented])
 
-# ARG_OPTIONAL_SINGLE([model],[],[Reference model used for determining FOV and mask],[${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron.mnc])
-# ARG_OPTIONAL_SINGLE([model-mask],[],[Mask matching reference model],[${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron_mask.mnc])
+# ARG_OPTIONAL_SINGLE([model],[],[Reference model used for determining FOV and mask],[${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop.mnc])
+# ARG_OPTIONAL_SINGLE([model-mask],[],[Mask matching reference model],[${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop_mask.mnc])
 
 # ARG_OPTIONAL_BOOLEAN([clobber],[c],[Overwrite files that already exist])
 # ARG_OPTIONAL_BOOLEAN([verbose],[v],[Run commands verbosely],[on])
@@ -26,14 +26,18 @@
 # Argbash is a bash code generator used to get arguments parsing right.
 # Argbash is FREE SOFTWARE, see https://argbash.dev for more info
 
-die() {
+
+die()
+{
   local _ret="${2:-1}"
   test "${_PRINT_HELP:-no}" = yes && print_help >&2
   echo "$1" >&2
   exit "${_ret}"
 }
 
-begins_with_short_option() {
+
+begins_with_short_option()
+{
   local first_option all_short_options='hcvd'
   first_option="${1:0:1}"
   test "$all_short_options" = "${all_short_options/$first_option/}" && return 1 || return 0
@@ -51,13 +55,15 @@ _arg_fwhm="0.1"
 _arg_stop="0.00001"
 _arg_isostep="0.3"
 _arg_big_misorientation="off"
-_arg_model="${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron.mnc"
-_arg_model_mask="${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron_mask.mnc"
+_arg_model="${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop.mnc"
+_arg_model_mask="${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop_mask.mnc"
 _arg_clobber="off"
 _arg_verbose="on"
 _arg_debug="off"
 
-print_help() {
+
+print_help()
+{
   printf '%s\n' "iterativeN3 inhomogeneity correction"
   printf 'Usage: %s [-h|--help] [--distance <arg>] [--levels <arg>] [--cycles <arg>] [--iters <arg>] [--lambda <arg>] [--fwhm <arg>] [--stop <arg>] [--isostep <arg>] [--(no-)big-misorientation] [--model <arg>] [--model-mask <arg>] [-c|--(no-)clobber] [-v|--(no-)verbose] [-d|--(no-)debug] <input> <output>\n' "$0"
   printf '\t%s\n' "<input>: Input MINC or NIFTI file"
@@ -72,166 +78,177 @@ print_help() {
   printf '\t%s\n' "--stop: Stopping criterion for N3 (default: '0.00001')"
   printf '\t%s\n' "--isostep: Isotropic resampling resolution in mm for N3 (default: '0.3')"
   printf '\t%s\n' "--big-misorientation, --no-big-misorientation: Input file is very misoriented (off by default)"
-  printf '\t%s\n' "--model: Reference model used for determining FOV and mask (default: '${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron.mnc')"
-  printf '\t%s\n' "--model-mask: Mask matching reference model (default: '${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron/ex-vivo/DSURQE_40micron_mask.mnc')"
+  printf '\t%s\n' "--model: Reference model used for determining FOV and mask (default: '${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop.mnc')"
+  printf '\t%s\n' "--model-mask: Mask matching reference model (default: '${QUARANTINE_PATH}/resources/Dorr_2008_Steadman_2013_Ullmann_2013_Richards_2011_Qiu_2016_Egan_2015_40micron_CoBrALab/DSURQE_40micron_denoise_N3_recrop_mask.mnc')"
   printf '\t%s\n' "-c, --clobber, --no-clobber: Overwrite files that already exist (off by default)"
   printf '\t%s\n' "-v, --verbose, --no-verbose: Run commands verbosely (on by default)"
   printf '\t%s\n' "-d, --debug, --no-debug: Show all internal commands and logic for debug (off by default)"
 }
 
-parse_commandline() {
+
+parse_commandline()
+{
   _positionals_count=0
   local _key
-  while test $# -gt 0; do
+  while test $# -gt 0
+  do
     _key="$1"
     case "$_key" in
-    -h | --help)
-      print_help
-      exit 0
-      ;;
-    -h*)
-      print_help
-      exit 0
-      ;;
-    --distance)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_distance="$2"
-      shift
-      ;;
-    --distance=*)
-      _arg_distance="${_key##--distance=}"
-      ;;
-    --levels)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_levels="$2"
-      shift
-      ;;
-    --levels=*)
-      _arg_levels="${_key##--levels=}"
-      ;;
-    --cycles)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_cycles="$2"
-      shift
-      ;;
-    --cycles=*)
-      _arg_cycles="${_key##--cycles=}"
-      ;;
-    --iters)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_iters="$2"
-      shift
-      ;;
-    --iters=*)
-      _arg_iters="${_key##--iters=}"
-      ;;
-    --lambda)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_lambda="$2"
-      shift
-      ;;
-    --lambda=*)
-      _arg_lambda="${_key##--lambda=}"
-      ;;
-    --fwhm)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_fwhm="$2"
-      shift
-      ;;
-    --fwhm=*)
-      _arg_fwhm="${_key##--fwhm=}"
-      ;;
-    --stop)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_stop="$2"
-      shift
-      ;;
-    --stop=*)
-      _arg_stop="${_key##--stop=}"
-      ;;
-    --isostep)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_isostep="$2"
-      shift
-      ;;
-    --isostep=*)
-      _arg_isostep="${_key##--isostep=}"
-      ;;
-    --no-big-misorientation | --big-misorientation)
-      _arg_big_misorientation="on"
-      test "${1:0:5}" = "--no-" && _arg_big_misorientation="off"
-      ;;
-    --model)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_model="$2"
-      shift
-      ;;
-    --model=*)
-      _arg_model="${_key##--model=}"
-      ;;
-    --model-mask)
-      test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
-      _arg_model_mask="$2"
-      shift
-      ;;
-    --model-mask=*)
-      _arg_model_mask="${_key##--model-mask=}"
-      ;;
-    -c | --no-clobber | --clobber)
-      _arg_clobber="on"
-      test "${1:0:5}" = "--no-" && _arg_clobber="off"
-      ;;
-    -c*)
-      _arg_clobber="on"
-      _next="${_key##-c}"
-      if test -n "$_next" -a "$_next" != "$_key"; then
-        { begins_with_short_option "$_next" && shift && set -- "-c" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
-      fi
-      ;;
-    -v | --no-verbose | --verbose)
-      _arg_verbose="on"
-      test "${1:0:5}" = "--no-" && _arg_verbose="off"
-      ;;
-    -v*)
-      _arg_verbose="on"
-      _next="${_key##-v}"
-      if test -n "$_next" -a "$_next" != "$_key"; then
-        { begins_with_short_option "$_next" && shift && set -- "-v" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
-      fi
-      ;;
-    -d | --no-debug | --debug)
-      _arg_debug="on"
-      test "${1:0:5}" = "--no-" && _arg_debug="off"
-      ;;
-    -d*)
-      _arg_debug="on"
-      _next="${_key##-d}"
-      if test -n "$_next" -a "$_next" != "$_key"; then
-        { begins_with_short_option "$_next" && shift && set -- "-d" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
-      fi
-      ;;
-    *)
-      _last_positional="$1"
-      _positionals+=("$_last_positional")
-      _positionals_count=$((_positionals_count + 1))
-      ;;
+      -h|--help)
+        print_help
+        exit 0
+        ;;
+      -h*)
+        print_help
+        exit 0
+        ;;
+      --distance)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_distance="$2"
+        shift
+        ;;
+      --distance=*)
+        _arg_distance="${_key##--distance=}"
+        ;;
+      --levels)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_levels="$2"
+        shift
+        ;;
+      --levels=*)
+        _arg_levels="${_key##--levels=}"
+        ;;
+      --cycles)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_cycles="$2"
+        shift
+        ;;
+      --cycles=*)
+        _arg_cycles="${_key##--cycles=}"
+        ;;
+      --iters)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_iters="$2"
+        shift
+        ;;
+      --iters=*)
+        _arg_iters="${_key##--iters=}"
+        ;;
+      --lambda)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_lambda="$2"
+        shift
+        ;;
+      --lambda=*)
+        _arg_lambda="${_key##--lambda=}"
+        ;;
+      --fwhm)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_fwhm="$2"
+        shift
+        ;;
+      --fwhm=*)
+        _arg_fwhm="${_key##--fwhm=}"
+        ;;
+      --stop)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_stop="$2"
+        shift
+        ;;
+      --stop=*)
+        _arg_stop="${_key##--stop=}"
+        ;;
+      --isostep)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_isostep="$2"
+        shift
+        ;;
+      --isostep=*)
+        _arg_isostep="${_key##--isostep=}"
+        ;;
+      --no-big-misorientation|--big-misorientation)
+        _arg_big_misorientation="on"
+        test "${1:0:5}" = "--no-" && _arg_big_misorientation="off"
+        ;;
+      --model)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_model="$2"
+        shift
+        ;;
+      --model=*)
+        _arg_model="${_key##--model=}"
+        ;;
+      --model-mask)
+        test $# -lt 2 && die "Missing value for the optional argument '$_key'." 1
+        _arg_model_mask="$2"
+        shift
+        ;;
+      --model-mask=*)
+        _arg_model_mask="${_key##--model-mask=}"
+        ;;
+      -c|--no-clobber|--clobber)
+        _arg_clobber="on"
+        test "${1:0:5}" = "--no-" && _arg_clobber="off"
+        ;;
+      -c*)
+        _arg_clobber="on"
+        _next="${_key##-c}"
+        if test -n "$_next" -a "$_next" != "$_key"
+        then
+          { begins_with_short_option "$_next" && shift && set -- "-c" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
+        fi
+        ;;
+      -v|--no-verbose|--verbose)
+        _arg_verbose="on"
+        test "${1:0:5}" = "--no-" && _arg_verbose="off"
+        ;;
+      -v*)
+        _arg_verbose="on"
+        _next="${_key##-v}"
+        if test -n "$_next" -a "$_next" != "$_key"
+        then
+          { begins_with_short_option "$_next" && shift && set -- "-v" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
+        fi
+        ;;
+      -d|--no-debug|--debug)
+        _arg_debug="on"
+        test "${1:0:5}" = "--no-" && _arg_debug="off"
+        ;;
+      -d*)
+        _arg_debug="on"
+        _next="${_key##-d}"
+        if test -n "$_next" -a "$_next" != "$_key"
+        then
+          { begins_with_short_option "$_next" && shift && set -- "-d" "-${_next}" "$@"; } || die "The short option '$_key' can't be decomposed to ${_key:0:2} and -${_key:2}, because ${_key:0:2} doesn't accept value and '-${_key:2:1}' doesn't correspond to a short option."
+        fi
+        ;;
+      *)
+        _last_positional="$1"
+        _positionals+=("$_last_positional")
+        _positionals_count=$((_positionals_count + 1))
+        ;;
     esac
     shift
   done
 }
 
-handle_passed_args_count() {
+
+handle_passed_args_count()
+{
   local _required_args_string="'input' and 'output'"
   test "${_positionals_count}" -ge 2 || _PRINT_HELP=yes die "FATAL ERROR: Not enough positional arguments - we require exactly 2 (namely: $_required_args_string), but got only ${_positionals_count}." 1
   test "${_positionals_count}" -le 2 || _PRINT_HELP=yes die "FATAL ERROR: There were spurious positional arguments --- we expect exactly 2 (namely: $_required_args_string), but got ${_positionals_count} (the last one was: '${_last_positional}')." 1
 }
 
-assign_positional_args() {
+
+assign_positional_args()
+{
   local _positional_name _shift_for=$1
   _positional_names="_arg_input _arg_output "
 
   shift "$_shift_for"
-  for _positional_name in ${_positional_names}; do
+  for _positional_name in ${_positional_names}
+  do
     test $# -gt 0 || break
     eval "$_positional_name=\${1}" || die "Error during argument parsing, possibly an Argbash bug." 1
     shift
@@ -454,7 +471,6 @@ if [[ ${_arg_big_misorientation} == "on" ]]; then
     -p 1 \
     -c 50 \
     -o ${tmpdir}/antsAI.mat
-
 
   # Register to model to use its foreground mask and FOV
   antsRegistration_affine_SyN.sh --skip-nonlinear \
