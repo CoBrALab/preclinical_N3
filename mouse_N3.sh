@@ -473,16 +473,16 @@ if [[ ${_arg_big_misorientation} == "on" ]]; then
     -o ${tmpdir}/antsAI.mat
 
   # Register to model to use its foreground mask and FOV
-  antsRegistration_affine_SyN.sh --skip-nonlinear \
+  antsRegistration_affine_SyN.sh --float --skip-nonlinear \
     --initial-transform ${tmpdir}/antsAI.mat \
-    --linear-type lsq9 \
+    --mask-all-linear \
     --fixed-mask ${tmpdir}/model_mask.mnc \
     ${tmpdir}/precorrect1_denoise.mnc \
     ${tmpdir}/model_downsample.mnc \
     ${tmpdir}/to_model_
 else
-  antsRegistration_affine_SyN.sh --skip-nonlinear \
-    --linear-type lsq9 \
+  antsRegistration_affine_SyN.sh --float --skip-nonlinear \
+    --mask-all-linear \
     --fixed-mask ${tmpdir}/model_mask.mnc \
     ${tmpdir}/precorrect1_denoise.mnc \
     ${tmpdir}/model_downsample.mnc \
@@ -527,17 +527,18 @@ hierarchical_N3 ${input} ${tmpdir}/fgweight.mnc ${tmpdir}/fgweight.mnc 40 2 ${_a
 
 minc_anlm --short --mt $(nproc) ${tmpdir}/precorrect2.mnc ${tmpdir}/precorrect2_denoise.mnc
 
-antsRegistration_affine_SyN.sh --clobber --skip-nonlinear \
+antsRegistration_affine_SyN.sh --float --clobber --skip-nonlinear \
   --initial-transform ${tmpdir}/to_model_0_GenericAffine.xfm \
   --close \
+  --mask-all-linear \
   --fixed-mask ${tmpdir}/model_mask.mnc \
   ${tmpdir}/precorrect2_denoise.mnc \
   ${tmpdir}/model_downsample.mnc \
   ${tmpdir}/to_model_2_
 
-antsRegistration_affine_SyN.sh --skip-linear --clobber \
-  --syn-metric CC[2] \
-  --syn-control 0.2,3,0 \
+antsRegistration_affine_SyN.sh --float --skip-linear --clobber \
+  --syn-metric CC[4] \
+  --syn-control 0.1,3,0 \
   --initial-transform ${tmpdir}/to_model_2_0_GenericAffine.xfm \
   --fixed-mask ${tmpdir}/model_mask.mnc \
   ${tmpdir}/precorrect2_denoise.mnc \
